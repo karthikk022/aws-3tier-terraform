@@ -49,3 +49,18 @@ output "db_port" {
   description = "RDS instance port"
   value       = module.database.db_port
 }
+
+output "terraform_state_bucket" {
+  description = "S3 bucket for Terraform remote state"
+  value       = aws_s3_bucket.terraform_state.id
+}
+
+output "terraform_locks_table" {
+  description = "DynamoDB table for Terraform state locking"
+  value       = aws_dynamodb_table.terraform_locks.name
+}
+
+output "waf_acl_arn" {
+  description = "ARN of the WAF ACL"
+  value       = module.web.waf_acl_arn
+}

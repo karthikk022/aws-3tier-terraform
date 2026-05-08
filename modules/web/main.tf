@@ -221,6 +221,100 @@ resource "aws_cloudwatch_metric_alarm" "web_cpu_low" {
   alarm_actions = [aws_autoscaling_policy.web_cpu_scale_down.arn]
 }
 
+resource "aws_wafv2_web_acl" "web" {
+  name        = "${var.project_name}-${var.environment}-web-acl"
+  description = "WAF ACL for web tier"
+  scope       = "REGIONAL"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "rate-limit"
+    priority = 1
+
+    action {
+      block {}
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 2000
+        aggregate_key_type = "IP"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-rate-limit"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "aws-managed-sqli"
+    priority = 2
+
+    override_action {
+      count {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesSQLiRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-sqli"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "aws-managed-xss"
+    priority = 3
+
+    override_action {
+      count {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-xss"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-web-acl"
+    Environment = var.environment
+    Project     = var.project_name
+    Tier        = "web"
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${var.project_name}-${var.environment}-web-acl"
+    sampled_requests_enabled   = true
+  }
+}
+
+resource "aws_wafv2_web_acl_association" "web" {
+  resource_arn = aws_lb.web.arn
+  web_acl_arn  = aws_wafv2_web_acl.web.arn
+}
+
 output "sg_id" {
   value = aws_security_group.web.id
 }
@@ -235,4 +329,8 @@ output "alb_zone_id" {
 
 output "target_group_arn" {
   value = aws_lb_target_group.web.arn
+}
+
+output "waf_acl_arn" {
+  value = aws_wafv2_web_acl.web.arn
 }

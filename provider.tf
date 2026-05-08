@@ -11,6 +11,16 @@ terraform {
       version = "~> 3.5"
     }
   }
+
+  # UNCOMMENT AFTER RUNNING: terraform apply (step 1)
+  # THEN RUN: terraform init -migrate (step 2)
+  # backend "s3" {
+  #   bucket         = "3tier-app-terraform-state"
+  #   key            = "terraform.tfstate"
+  #   region         = "us-east-1"
+  #   dynamodb_table = "3tier-app-terraform-locks"
+  #   encrypt        = true
+  # }
 }
 
 provider "aws" {
