@@ -28,12 +28,12 @@ resource "aws_security_group" "db" {
 }
 
 resource "aws_db_subnet_group" "db" {
-  name        = "${var.project_name}-${var.environment}-db-subnet-group"
+  name        = "${var.environment}-${var.project_name}-db-subnet-group"
   description = "Database subnet group for ${var.project_name}-${var.environment}"
   subnet_ids  = var.db_subnet_ids
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-db-subnet-group"
+    Name        = "${var.environment}-${var.project_name}-db-subnet-group"
     Environment = var.environment
     Project     = var.project_name
   }
@@ -45,7 +45,7 @@ resource "random_id" "snapshot" {
 }
 
 resource "aws_db_instance" "db" {
-  identifier = "${var.project_name}-${var.environment}-rds"
+  identifier = "${var.environment}-${var.project_name}-rds"
 
   engine            = var.engine
   engine_version    = var.engine_version
@@ -62,12 +62,12 @@ resource "aws_db_instance" "db" {
   vpc_security_group_ids = [aws_security_group.db.id]
 
   multi_az                = var.multi_az
-  backup_retention_period = 7
+  backup_retention_period = 0
   backup_window           = "03:00-04:00"
   maintenance_window      = "sun:04:00-sun:05:00"
 
   skip_final_snapshot       = var.skip_final_snapshot
-  final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.project_name}-${var.environment}-${random_id.snapshot[0].hex}"
+  final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.environment}-${var.project_name}-${random_id.snapshot[0].hex}"
 
   auto_minor_version_upgrade = true
   deletion_protection        = var.environment == "prod" ? true : false

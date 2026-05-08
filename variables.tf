@@ -49,13 +49,13 @@ variable "db_subnet_cidrs" {
 variable "web_instance_type" {
   description = "EC2 instance type for web tier"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "app_instance_type" {
   description = "EC2 instance type for app tier"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "ami_id" {
