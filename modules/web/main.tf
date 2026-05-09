@@ -91,14 +91,33 @@ resource "aws_lb_listener" "web_http" {
 }
 
 resource "aws_lb_listener" "web_https" {
-  count             = 0
+  count             = var.certificate_arn != "" ? 1 : 0
   load_balancer_arn = aws_lb.web.arn
   port              = 443
   protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.certificate_arn
 
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.web.arn
+  }
+}
+
+resource "aws_lb_listener" "web_http_redirect" {
+  count             = var.certificate_arn != "" ? 1 : 0
+  load_balancer_arn = aws_lb.web.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 
@@ -110,7 +129,9 @@ resource "aws_launch_template" "web" {
 
   vpc_security_group_ids = [aws_security_group.web.id]
 
-  user_data = base64encode(templatefile("${path.module}/user_data/web.sh", {}))
+  user_data = base64encode(templatefile("${path.module}/user_data/web.sh", {
+    app_alb_dns = var.app_alb_dns
+  }))
 
   tag_specifications {
     resource_type = "instance"

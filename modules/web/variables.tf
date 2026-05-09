@@ -70,3 +70,15 @@ variable "app_port" {
   type        = number
   default     = 80
 }
+
+variable "app_alb_dns" {
+  description = "DNS name of the application load balancer"
+  type        = string
+  default     = ""
+}
+
+variable "certificate_arn" {
+  description = "ARN of the ACM certificate for HTTPS"
+  type        = string
+  default     = ""
+}

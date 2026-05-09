@@ -4,9 +4,9 @@ resource "aws_security_group" "db" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "MySQL from app tier"
-    from_port       = 3306
-    to_port         = 3306
+    description     = "Database access from app tier"
+    from_port       = var.db_port
+    to_port         = var.db_port
     protocol        = "tcp"
     security_groups = [var.app_sg_id]
   }
@@ -62,7 +62,8 @@ resource "aws_db_instance" "db" {
   vpc_security_group_ids = [aws_security_group.db.id]
 
   multi_az                = var.multi_az
-  backup_retention_period = 0
+  port                    = var.db_port
+  backup_retention_period = var.environment == "prod" ? 7 : 1
   backup_window           = "03:00-04:00"
   maintenance_window      = "sun:04:00-sun:05:00"
 

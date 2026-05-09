@@ -39,11 +39,18 @@ A production-ready, highly available three-tier architecture on AWS, provisioned
 
 ### Key Features
 
-- **Multi-AZ** deployment across 2 Availability Zones
-- **Auto Scaling Groups** with CPU-based scaling policies
-- **NAT Gateway** for private subnet internet access
-- **Security Groups** with least-privilege, tier-to-tier rules
-- **CloudWatch Alarms** for automated scale up/down
+- **Multi-AZ** deployment across 2 Availability Zones for high availability.
+- **Auto Scaling Groups** with CPU-based scaling policies and CloudWatch Alarms.
+- **NAT Gateway** for secure outbound internet access from private subnets.
+- **Security Groups & NACLs** for multi-layered network security.
+- **HTTPS Ready** with ALB listener configuration and ACM integration support.
+- **Nginx Reverse Proxy** configured on the web tier to forward traffic to the app tier.
+- **Database Integration** in the app tier with `mysql2` and connection pooling.
+- **Secrets Management** using AWS Secrets Manager for secure credential handling.
+- **Automated Backups** for RDS with configurable retention periods.
+- **Dynamic AMI Selection** using Terraform data sources for the latest Amazon Linux 2023.
+- **CI/CD Pipeline** with GitHub Actions for automated infrastructure deployment.
+- **Enhanced Monitoring** with CloudWatch Alarms for CPU and health checks.
 
 ## Prerequisites
 

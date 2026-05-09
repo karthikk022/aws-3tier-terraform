@@ -76,3 +76,9 @@ variable "multi_az" {
   type        = bool
   default     = true
 }
+
+variable "db_port" {
+  description = "Database port"
+  type        = number
+  default     = 3306
+}

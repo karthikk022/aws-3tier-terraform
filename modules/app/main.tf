@@ -91,7 +91,11 @@ resource "aws_launch_template" "app" {
   vpc_security_group_ids = [aws_security_group.app.id]
 
   user_data = base64encode(templatefile("${path.module}/user_data/app.sh", {
-    app_port = var.app_port
+    app_port    = var.app_port
+    db_endpoint = var.db_endpoint
+    db_name     = var.db_name
+    db_username = var.db_username
+    db_password = var.db_password
   }))
 
   tag_specifications {
@@ -201,6 +205,24 @@ resource "aws_cloudwatch_metric_alarm" "app_cpu_low" {
   }
 
   alarm_actions = [aws_autoscaling_policy.app_cpu_scale_down.arn]
+}
+
+# Application Health Alarm
+resource "aws_cloudwatch_metric_alarm" "app_unhealthy_hosts" {
+  alarm_name          = "${var.project_name}-${var.environment}-app-unhealthy-hosts"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "UnHealthyHostCount"
+  namespace           = "AWS/ApplicationELB"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = "0"
+  alarm_description   = "Alarm if there are unhealthy hosts in the app target group"
+
+  dimensions = {
+    TargetGroup  = aws_lb_target_group.app.arn_suffix
+    LoadBalancer = aws_lb.app.arn_suffix
+  }
 }
 
 output "sg_id" {

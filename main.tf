@@ -1,3 +1,17 @@
+data "aws_ami" "amazon_linux_2023" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023*-x86_64"]
+  }
+}
+
+locals {
+  ami_id = var.ami_id != null ? var.ami_id : data.aws_ami.amazon_linux_2023.id
+}
+
 module "vpc" {
   source = "./modules/vpc"
 
@@ -19,13 +33,14 @@ module "web" {
   environment       = var.environment
   project_name      = var.project_name
   instance_type     = var.web_instance_type
-  ami_id            = var.ami_id
+  ami_id            = local.ami_id
   key_name          = var.key_name
   min_size          = var.web_min_size
   max_size          = var.web_max_size
   desired_capacity  = var.web_desired_capacity
   health_check_path = "/"
   app_port          = 80
+  app_alb_dns       = module.app.internal_alb_dns_name
 }
 
 module "app" {
@@ -37,12 +52,16 @@ module "app" {
   environment      = var.environment
   project_name     = var.project_name
   instance_type    = var.app_instance_type
-  ami_id           = var.ami_id
+  ami_id           = local.ami_id
   key_name         = var.key_name
   min_size         = var.app_min_size
   max_size         = var.app_max_size
   desired_capacity = var.app_desired_capacity
   app_port         = 3000
+  db_endpoint      = module.database.db_endpoint
+  db_name          = var.db_name
+  db_username      = var.db_username
+  db_password      = var.db_password
 }
 
 resource "aws_s3_bucket" "terraform_state" {
@@ -96,6 +115,31 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 }
 
+# Secrets Manager for Database Credentials
+resource "aws_secretsmanager_secret" "db_credentials" {
+  name        = "${var.project_name}-${var.environment}-db-credentials"
+  description = "Database credentials for ${var.project_name}"
+  
+  recovery_window_in_days = 0 # For development/demo purposes
+  
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "db_credentials" {
+  secret_id = aws_secretsmanager_secret.db_credentials.id
+  secret_string = jsonencode({
+    username = var.db_username
+    password = var.db_password
+    engine   = var.db_engine
+    host     = module.database.db_address
+    port     = var.db_port
+    db_name  = var.db_name
+  })
+}
+
 module "database" {
   source = "./modules/database"
 
@@ -110,6 +154,7 @@ module "database" {
   engine              = var.db_engine
   engine_version      = var.db_engine_version
   instance_class      = var.db_instance_class
+  db_port             = var.db_port
   skip_final_snapshot = var.skip_final_snapshot
   multi_az            = var.environment == "prod" ? true : false
 }

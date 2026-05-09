@@ -59,9 +59,9 @@ variable "app_instance_type" {
 }
 
 variable "ami_id" {
-  description = "AMI ID for EC2 instances (Amazon Linux 2)"
+  description = "AMI ID for EC2 instances (Optional, will use latest Amazon Linux 2023 if null)"
   type        = string
-  default     = "ami-0c02fb55956c7d316"
+  default     = null
 }
 
 variable "key_name" {
@@ -98,6 +98,12 @@ variable "db_engine_version" {
   description = "Database engine version"
   type        = string
   default     = "8.0"
+}
+
+variable "db_port" {
+  description = "Database port"
+  type        = number
+  default     = 3306
 }
 
 variable "db_instance_class" {
